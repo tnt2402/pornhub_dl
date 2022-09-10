@@ -1,0 +1,7 @@
+bs4==0.0.1
+requests==2.28.1
+youtube-dl==2020.1.1
+lxml==4.6.3
+pyfiglet==0.8.post1
+m3u8downloader==0.10.1
+
