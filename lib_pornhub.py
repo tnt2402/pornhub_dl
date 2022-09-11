@@ -77,7 +77,7 @@ def ph_download_playlist(url, model_name, limit):
 
     # tmp_playlist download
     print('... Getting playlist information...')
-    playlist_download_command = ["youtube-dl", "-j", "--flat-playlist", url]
+    playlist_download_command = ["youtube-dl", "-j", "--flat-playlist", "--no-check-certificate", url]
     res = subprocess.run(playlist_download_command, capture_output=True, text=True).stdout.split("\n")
     if (limit != 0 ):
         print("[!] Limit: {} videos".format(limit))
