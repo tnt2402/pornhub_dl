@@ -83,7 +83,7 @@ def ph_download_playlist(url, model_name, limit):
         print("[!] Limit: {} videos".format(limit))
     count = 0
     for i in range(len(res) - 1):
-        if (count == limit):
+        if (count == limit and limit != 0):
             break
             sys.exit()
         try:
@@ -119,7 +119,7 @@ def get_model_name(url):
 def fix_url(url, type):
     url = ph_check_valid_pornhub_url(url)
     model_name = get_model_name(url)
-    url = 'https://www.pornhub.com/model/' + model_name + '/videos'
+    url = 'www.pornhub.com/model/' + model_name + '/videos'
     if (type == 'most-viewed'):
         url = url + '?o=mv'
     elif (type == 'top-rated'):
