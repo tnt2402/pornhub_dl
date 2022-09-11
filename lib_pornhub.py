@@ -83,13 +83,14 @@ def ph_download_playlist(url, model_name, limit):
         print("[!] Limit: {} videos".format(limit))
     count = 0
     for i in range(len(res) - 1):
+        if (count == limit):
+            break
+            sys.exit()
         try:
-            if (count == limit):
-                sys.exit()
             video_dict = ast.literal_eval(res[i])
             video = ydl.extract_info(str(video_dict["url"]), download=False)
             filename = fix_title(str(video["title"])) + '.' + str(video['ext'])
-            print('\n\n\n\n#######################\n\n[-] Video #{}: {}\n\n'.format(i, filename))
+            print('\n\n\n\n#######################\n\n[-] Video #{}: {}\n\n'.format(count, filename))
             filename = download_dir + '\\' + model_name + '\\' + filename
             url_video = video['url']
             result = subprocess.run(["downloadm3u8", "-o", filename, url_video])

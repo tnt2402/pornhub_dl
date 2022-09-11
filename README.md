@@ -2,6 +2,11 @@
 
 PornHub-dl is a Python tool for downloading PornHub video/playlist.
 
+## Requirements
+```bash
+Python 3.7 or later
+ffmpeg
+```
 ## Installation
 
 
