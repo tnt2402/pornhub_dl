@@ -51,8 +51,11 @@ def ph_check_valid_pornhub_url(url):
 
 
 def fix_title(s):
-    decoded_unicode = ''.join([i if i in string.printable else ' ' for i in s]).replace('/', ' ')
-    return decoded_unicode.replace('\\', ' ')
+    decoded_unicode = ''.join([i if i in string.printable else ' ' for i in s])
+    deny_char = ['\\', '/', '.', '?', '*', ':']
+    for i in deny_char:
+        decoded_unicode.replace[i, ' ']
+    return decoded_unicode
 
 def check_output_dir(model_name):
     global download_dir
