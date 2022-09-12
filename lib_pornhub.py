@@ -8,6 +8,7 @@ import ast
 import string
 import subprocess
 import pyfiglet
+import signal
 
 #############
 def ascii_banner(text):
@@ -49,12 +50,18 @@ def ph_check_valid_pornhub_url(url):
         url = 'https://www.' + url
     return url    
 
+def download_video(url, filename):
+    try:
+        p = subprocess.run(["downloadm3u8", "-o", filename, url])
+    except KeyboardInterrupt:
+        os.kill(p.pid, signal.CTRL_C_EVENT)
+        sys.exit()
 
 def fix_title(s):
     decoded_unicode = ''.join([i if i in string.printable else ' ' for i in s])
     deny_char = ['\\', '/', '.', '?', '*', ':']
     for i in deny_char:
-        decoded_unicode.replace[i, ' ']
+        decoded_unicode = decoded_unicode.replace(i, '')
     return decoded_unicode
 
 def check_output_dir(model_name):
@@ -71,7 +78,7 @@ def ph_download_video(url, model_name):
         print('    [-] {}'.format(filename))
         filename = download_dir + '\\' + model_name + '\\' + filename
         url_video = video['url']
-        res = subprocess.run(["downloadm3u8", "-o", filename, url_video])
+        download_video(url_video, filename)
     except:
         print('Cannot download video')
    
@@ -96,7 +103,7 @@ def ph_download_playlist(url, model_name, limit):
             print('\n\n\n\n#######################\n\n[-] Video #{}: {}\n\n'.format(count, filename))
             filename = download_dir + '\\' + model_name + '\\' + filename
             url_video = video['url']
-            result = subprocess.run(["downloadm3u8", "-o", filename, url_video])
+            download_video(url_video, filename)
             count = count + 1
         except:
             print("Cannot download video")
