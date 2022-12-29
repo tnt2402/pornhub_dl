@@ -1,15 +1,12 @@
 #!/usr/bin/env python
-import youtube_dl
-import requests as req
 import sys
 import os
-from bs4 import BeautifulSoup
 import ast
 import string
 import subprocess
 import pyfiglet
 import signal
-import mechanicalsoup
+import json
 
 #############
 def ascii_banner(text):
@@ -17,16 +14,7 @@ def ascii_banner(text):
     ascii_banner = pyfiglet.figlet_format(text)
     print(ascii_banner) 
 ################################
-### Configuration
-ydl_opts_start = {
-    'nooverwrites': True,
-    'no_warnings': True,
-    'ignoreerrors': True,
-    'format': "bestvideo",
-}
 
-
-ydl = youtube_dl.YoutubeDL(ydl_opts_start)
 
 download_dir = os.getcwd() 
 
@@ -53,7 +41,12 @@ def ph_check_valid_pornhub_url(url):
 
 def download_video(url, filename):
     try:
-        p = subprocess.run(['.\youtube-dl', '--hls-prefer-ffmpeg', '--ffmpeg-location', os.getcwd(), '-o', filename, url], shell = True)
+        p = subprocess.Popen(['.\youtube-dl', '--no-warnings', '--hls-prefer-ffmpeg', '--ffmpeg-location', os.getcwd(), '-o', filename, url], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell = False)                            
+        for line in iter(p.stdout.readline, b''):
+            line = line.decode('utf-8').strip()
+            if ("[ffmpeg] " in line or "[download] " in line):
+                print(line.strip())
+        print("[$] Video download successfully!")
     except KeyboardInterrupt:
         os.kill(p.pid, signal.CTRL_C_EVENT)
         sys.exit()
@@ -74,7 +67,6 @@ def check_output_dir(model_name):
 def ph_download_video(url, model_name, filename):
     try: 
         check_output_dir(model_name)
-        # video = ydl.extract_info(url, download=False)
         # filename = os.path.join(download_dir, model_name, fix_title(str(video["title"])) + '.' + str(video['ext']))
         download_video(url, filename)
     except:
@@ -107,57 +99,31 @@ def ph_download_playlist(url, model_name, limit):
         except:
             print("Cannot download video")
 
-def get_model_name(url):
-   
-    # html = req.get(url).text
-    # soup = BeautifulSoup(html, 'lxml')
-   
-    browser = mechanicalsoup.Browser()
-
-    page = browser.get(url)
-
-    soup = BeautifulSoup(page.text, 'lxml')
-
-    if ("Page Not Found" in soup.title):
-        print("Page not found!")
-        sys.exit()
-
-    user = soup.find(class_='userInfo')
-    if (user != None):
-        finder = user.find(class_='usernameBadgesWrapper')
-        name = finder.find(class_='bolded').text.replace('\n', '').strip()
-    else:
-        user = soup.find(class_='topProfileHeader')
-        finder = user.find(class_='nameSubscribe')
-        name = finder.find(class_='name').text.replace('\n', '').strip()
-    return name
-
-def fix_url(url, type):
-    url = ph_check_valid_pornhub_url(url)
-    model_name = get_model_name(url)
-    url = 'www.pornhub.com/model/' + model_name + '/videos'
-    if (type == 'most-viewed'):
-        url = url + '?o=mv'
-    elif (type == 'top-rated'):
-        url = url + '?o=tr'
-    elif (type == 'longest'):
-        url = url + '?o=lg'
-    print("[+] Model: " + model_name)
-    return (url, model_name)
+# def fix_url(url, type):
+#     url = ph_check_valid_pornhub_url(url)
+#     # model_name = get_model_name(url)
+#     url = 'www.pornhub.com/model/' + model_name + '/videos'
+#     if (type == 'most-viewed'):
+#         url = url + '?o=mv'
+#     elif (type == 'top-rated'):
+#         url = url + '?o=tr'
+#     elif (type == 'longest'):
+#         url = url + '?o=lg'
+#     print("[+] Model: " + model_name)
+#     return (url, model_name)
 
 def ph_get_video(url):
     url = ph_check_valid_pornhub_url(url)
-    info = ydl.extract_info(url, download=False)
-    retry = 0
-    while (info == None and retry < 5):
-        info = ydl.extract_info(url, download=False)
-        retry += 1
-
+    
+    p = subprocess.Popen(['.\youtube-dl', '--no-warnings', '--dump-json', '--skip-download', url], stdout=subprocess.PIPE, stderr=None, shell = True)
+    output = p.communicate()[0]
+    info = json.loads(output.decode('utf-8'))
     model_name = info['uploader']
     filename = os.path.join(download_dir, model_name, fix_title(str(info["title"])) + '.' + str(info['ext']))
     print("[+] Model: " + model_name)
+    print("[+] Filename: " + fix_title(str(info["title"])) + '.' + str(info['ext']))
     ph_download_video(url, model_name, filename)
 
-def ph_get_playlist(url, type, limit):
-    url, model_name = fix_url(url, type)
-    ph_download_playlist(url, model_name, limit)
+# def ph_get_playlist(url, type, limit):
+#     url, model_name = fix_url(url, type)
+#     ph_download_playlist(url, model_name, limit)
