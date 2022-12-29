@@ -42,15 +42,16 @@ def ph_check_valid_pornhub_url(url):
 
 def download_video(url, filename):
     global duration
-    pbar = tqdm(total=duration, unit= " fragments")
     state = 0
+    print('[+] Save as: ' + filename + '\n')
     try:
+        pbar = tqdm(total=duration, unit= " fragments")
         p = subprocess.Popen(['.\youtube-dl', '--no-warnings', '--hls-prefer-ffmpeg', '--ffmpeg-location', os.getcwd(), '-o', filename, url], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell = False)                            
         for line in iter(p.stdout.readline, b''):
             line = line.decode('utf-8').strip()
-            if ("[ffmpeg] " in line):
-                print('\n' + line.strip())
-            elif "time=" in line:
+            # if ("[ffmpeg] " in line):
+            #     print('\n' + line.strip())
+            if "time=" in line:
                 time = line.split("time=")[1][:8]
                 hour, minute, second = time.split(":")
                 progress_time = 3600 * int(hour) + 60 * int(minute) + int(second)
@@ -60,8 +61,9 @@ def download_video(url, filename):
             elif "Failed" in line:
                 print("\nFailed while processing")
                 sys.exit(1)
+        pbar.update(duration)
         pbar.close()
-        print("\n[$] Video download successfully!")
+        # print("\n[$] Video download successfully!")
     except KeyboardInterrupt:
         os.kill(p.pid, signal.CTRL_C_EVENT)
         sys.exit()
@@ -90,6 +92,8 @@ def ph_download_video(url, model_name, filename):
         print('Cannot download video')
    
 def ph_download_playlist(url, model_name, limit):
+    global download_dir
+    global duration
     check_output_dir(model_name)
 
     # tmp_playlist download
@@ -105,29 +109,39 @@ def ph_download_playlist(url, model_name, limit):
             sys.exit()
         try:
             video_dict = ast.literal_eval(res[i])
-            video = ydl.extract_info(str(video_dict["url"]), download=False)
-            filename = fix_title(str(video["title"])) + '.' + str(video['ext'])
-            print('\n\n\n\n#######################\n\n[-] Video #{}: {}\n\n'.format(count, filename))
-            # filename = download_dir + '\\' + model_name + '\\' + filename
-            filename = os.path.join(download_dir, model_name, filename)
-            url_video = video['url']
-            download_video(url_video, filename)
+            url = video_dict['url']
+            p = subprocess.Popen(['.\youtube-dl', '--no-warnings', '--dump-json', '--skip-download', url], stdout=subprocess.PIPE, stderr=None, shell = True)
+            output = p.communicate()[0]
+            info = json.loads(output.decode('utf-8'))
+            duration = int(info['duration'])
+            filename = os.path.join(download_dir, model_name, fix_title(str(info["title"])) + '.' + str(info['ext']))
+            print("\n\n==========================================\n[+] File #{}: {}".format(count, fix_title(str(info["title"])) + '.' + str(info['ext'])))
+            ph_download_video(url, model_name, filename)
             count = count + 1
-        except:
+        except KeyboardInterrupt:
             print("Cannot download video")
+            sys.exit()
 
-# def fix_url(url, type):
-#     url = ph_check_valid_pornhub_url(url)
-#     # model_name = get_model_name(url)
-#     url = 'www.pornhub.com/model/' + model_name + '/videos'
-#     if (type == 'most-viewed'):
-#         url = url + '?o=mv'
-#     elif (type == 'top-rated'):
-#         url = url + '?o=tr'
-#     elif (type == 'longest'):
-#         url = url + '?o=lg'
-#     print("[+] Model: " + model_name)
-#     return (url, model_name)
+def fix_url(url, type):
+    url = ph_check_valid_pornhub_url(url)
+
+    if '/model/' not in url:
+        p = subprocess.Popen(['.\youtube-dl', '--no-warnings', '--dump-json', '--skip-download', url], stdout=subprocess.PIPE, stderr=None, shell = True)
+        output = p.communicate()[0]
+        info = json.loads(output.decode('utf-8'))
+        model_name = info['uploader']
+    else:
+        model_name = url.split('/model/')[1].split('/')[0]
+    
+    url = 'www.pornhub.com/model/' + model_name + '/videos'
+    if (type == 'most-viewed'):
+        url = url + '?o=mv'
+    elif (type == 'top-rated'):
+        url = url + '?o=tr'
+    elif (type == 'longest'):
+        url = url + '?o=lg'
+    print("[+] Model: " + model_name)
+    return (url, model_name)
 
 def ph_get_video(url):
     global duration
@@ -143,6 +157,6 @@ def ph_get_video(url):
     print("[+] Filename: " + fix_title(str(info["title"])) + '.' + str(info['ext']))
     ph_download_video(url, model_name, filename)
 
-# def ph_get_playlist(url, type, limit):
-#     url, model_name = fix_url(url, type)
-#     ph_download_playlist(url, model_name, limit)
+def ph_get_playlist(url, type, limit):
+    url, model_name = fix_url(url, type)
+    ph_download_playlist(url, model_name, limit)
