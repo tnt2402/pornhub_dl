@@ -1,6 +1,5 @@
 requests
-youtube-dl
 lxml
 pyfiglet
-
+tqdm
 

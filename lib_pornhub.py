@@ -7,7 +7,8 @@ import subprocess
 import pyfiglet
 import signal
 import json
-
+from time import sleep
+from tqdm import tqdm
 #############
 def ascii_banner(text):
     print('\n\n########################################################\n\n\n')
@@ -15,7 +16,7 @@ def ascii_banner(text):
     print(ascii_banner) 
 ################################
 
-
+duration = 1000
 download_dir = os.getcwd() 
 
 def ph_config_dl_dir(dir):
@@ -40,16 +41,31 @@ def ph_check_valid_pornhub_url(url):
     return url    
 
 def download_video(url, filename):
+    global duration
+    pbar = tqdm(total=duration, unit= " fragments")
+    state = 0
     try:
         p = subprocess.Popen(['.\youtube-dl', '--no-warnings', '--hls-prefer-ffmpeg', '--ffmpeg-location', os.getcwd(), '-o', filename, url], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell = False)                            
         for line in iter(p.stdout.readline, b''):
             line = line.decode('utf-8').strip()
-            if ("[ffmpeg] " in line or "[download] " in line):
-                print(line.strip())
-        print("[$] Video download successfully!")
+            if ("[ffmpeg] " in line):
+                print('\n' + line.strip())
+            elif "time=" in line:
+                time = line.split("time=")[1][:8]
+                hour, minute, second = time.split(":")
+                progress_time = 3600 * int(hour) + 60 * int(minute) + int(second)
+                pbar.update(progress_time - state)
+                state = progress_time
+                sleep(0.001)
+            elif "Failed" in line:
+                print("\nFailed while processing")
+                sys.exit(1)
+        pbar.close()
+        print("\n[$] Video download successfully!")
     except KeyboardInterrupt:
         os.kill(p.pid, signal.CTRL_C_EVENT)
         sys.exit()
+
 
 def fix_title(s):
     decoded_unicode = ''.join([i if i in string.printable else ' ' for i in s])
@@ -65,6 +81,7 @@ def check_output_dir(model_name):
         os.mkdir(download_dir+model_name)
 
 def ph_download_video(url, model_name, filename):
+ 
     try: 
         check_output_dir(model_name)
         # filename = os.path.join(download_dir, model_name, fix_title(str(video["title"])) + '.' + str(video['ext']))
@@ -113,12 +130,14 @@ def ph_download_playlist(url, model_name, limit):
 #     return (url, model_name)
 
 def ph_get_video(url):
+    global duration
     url = ph_check_valid_pornhub_url(url)
     
     p = subprocess.Popen(['.\youtube-dl', '--no-warnings', '--dump-json', '--skip-download', url], stdout=subprocess.PIPE, stderr=None, shell = True)
     output = p.communicate()[0]
     info = json.loads(output.decode('utf-8'))
     model_name = info['uploader']
+    duration = int(info['duration'])
     filename = os.path.join(download_dir, model_name, fix_title(str(info["title"])) + '.' + str(info['ext']))
     print("[+] Model: " + model_name)
     print("[+] Filename: " + fix_title(str(info["title"])) + '.' + str(info['ext']))
