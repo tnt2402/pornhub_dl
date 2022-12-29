@@ -5,7 +5,7 @@ PornHub-dl is a Python tool for downloading PornHub video/playlist.
 ## Requirements
 ```bash
 Python 3.7 or later
-ffmpeg
+A VPN or you can use 1.1.1.1 WARP 
 ```
 ## Installation
 
@@ -50,8 +50,6 @@ Please make sure to update tests as appropriate.
 YouTube-DL (the world's most powerful tool) 
 
 PyFiglet (simple and beauty)
-
-BeautifulSoup4
 
 @mariosemes for his PornHub-downloader (github.com/mariosemes/PornHub-downloader-python)
 
