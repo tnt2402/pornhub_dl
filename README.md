@@ -32,9 +32,11 @@ optional arguments:
 
 # download single video from PornHub
 pornhub_dl.py --url https://www.pornhub.com/view_video.php?viewkey=ph5b11c7f2ddecc
-# download all videos (most viewed) from model CarryLight of PornHub
+# download first 30 videos (default = best) from model CarryLight
+pornhub_dl.py --url https://www.pornhub.com/model/carrylight --playlist --limit 30
+# download all videos (most viewed) from model CarryLight
 pornhub_dl.py --url https://www.pornhub.com/model/carrylight --playlist most-viewed
-# download first 30 videos (most viewed) from model CarryLight of PornHub
+# download first 30 videos (most viewed) from model CarryLight
 pornhub_dl.py --url https://www.pornhub.com/model/carrylight --playlist most-viewed --limit 30
 ```
 
