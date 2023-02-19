@@ -16,7 +16,7 @@ else:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--url', type=str, help = 'URL of Pornhub video')
-    parser.add_argument('--playlist', type=str, default='recent', const='recent', nargs='?', choices = ['recent', 'most-viewed', 'best', 'top-rated', 'longest'], help = 'Optional ordering of videos')
+    parser.add_argument('--playlist', type=str, default='best', const='best', nargs='?', choices = ['most-viewed', 'best', 'top-rated', 'longest'], help = 'Optional ordering of videos')
     parser.add_argument('--limit', type=int, help = 'Maximum number of videos', default=0)
     parser.add_argument('--dir', type=str, help = 'Output directory')
     args = parser.parse_args()
