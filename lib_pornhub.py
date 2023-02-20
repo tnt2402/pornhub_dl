@@ -101,7 +101,7 @@ def fix_title(s):
     deny_char = ['\\', '/', '.', '?', '*', ':', '!']
     for i in deny_char:
         decoded_unicode = decoded_unicode.replace(i, '')
-    return decoded_unicode
+    return decoded_unicode.strip()
 
 
 def check_output_dir(model_name):
