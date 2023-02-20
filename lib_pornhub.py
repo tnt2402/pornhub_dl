@@ -16,7 +16,7 @@ def ascii_banner(text):
     print(ascii_banner) 
 ################################
 
-duration = 1000
+# duration = 1000
 download_dir = os.getcwd() 
 
 def ph_config_dl_dir(dir):
@@ -31,6 +31,25 @@ def ph_config_dl_dir(dir):
     if (os.path.exists(download_dir) != True):
         os.mkdir(download_dir)
 
+def run_command(command):
+    process = subprocess.Popen(command, stdout=subprocess.PIPE)
+    pbar = tqdm(total=100, unit= " percents")
+    state = 0
+    while True:
+        output = process.stdout.readline().decode("utf-8")
+        if output == '' and process.poll() is not None:
+            break
+        if '[download' in output:
+            # print(output.strip())
+            if 'frag' in output:
+                current_per = float(output.split('%')[0].replace('[download]', '').strip())
+                pbar.update(current_per - state)
+                state = current_per
+                sleep(0.00001)
+    pbar.close()
+    rc = process.poll()
+    return rc
+
 ### Main functions
 def ph_check_valid_pornhub_url(url):
     if ('pornhub.com' not in url):
@@ -41,29 +60,39 @@ def ph_check_valid_pornhub_url(url):
     return url    
 
 def download_video(url, filename):
-    global duration
+    # global duration
     state = 0
     print('[+] Save as: ' + filename + '\n')
     try:
-        pbar = tqdm(total=duration, unit= " fragments")
-        p = subprocess.Popen(['.\youtube-dl', '--no-warnings', '--hls-prefer-ffmpeg', '--ffmpeg-location', os.getcwd(), '-o', filename, url], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell = False)                            
-        for line in iter(p.stdout.readline, b''):
-            line = line.decode('utf-8').strip()
-            # if ("[ffmpeg] " in line):
-            #     print('\n' + line.strip())
-            if "time=" in line:
-                time = line.split("time=")[1][:8]
-                hour, minute, second = time.split(":")
-                progress_time = 3600 * int(hour) + 60 * int(minute) + int(second)
-                pbar.update(progress_time - state)
-                state = progress_time
-                sleep(0.001)
-            elif "Failed" in line:
-                print("\nFailed while processing")
-                sys.exit(1)
-        pbar.update(duration)
-        pbar.close()
-        # print("\n[$] Video download successfully!")
+        text = ''
+        # pbar = tqdm(total=duration, unit= " fragments")
+        # p = subprocess.Popen(['.\yt-dlp', '--no-warnings', '-R', '5', '--fragment-retries', '5', '--hls-prefer-ffmpeg', '--ffmpeg-location', os.getcwd(), '-o', filename, url], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell = False)                            
+        # p = subprocess.Popen(['.\yt-dlp', '--no-warnings', '--newline', '-R', '5', '-N', '5', '--windows-filenames', '--no-part', '--concurrent-fragments', '5','--fixup', 'never', '-o', filename, url], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell = False)                            
+        run_command(['.\yt-dlp', '--no-warnings', '--newline', '-R', '5', '-N', '5', '--windows-filenames', '--no-part', '--concurrent-fragments', '2','--fixup', 'never', '-o', filename, url])
+
+        # for line in iter(p.stdout.readline, b''):
+        #     line = line.decode('utf-8').strip()
+        #     # text = text + line
+        #     # if ("[ffmpeg] " in line):
+        #     #     print('\n' + line.strip())
+        #     # if "time=" in line:
+        #     #     time = line.split("time=")[1][:8]
+        #     #     hour, minute, second = time.split(":")
+        #     #     progress_time = 3600 * int(hour) + 60 * int(minute) + int(second)
+        #     #     pbar.update(progress_time - state)
+        #     #     state = progress_time
+        #     #     sleep(0.001)
+        #     # elif "Failed" in line:
+        #     #     print("\nFailed while processing")
+        #     #     print(text)
+        #     #     sys.exit(1)
+        #     if "download" in line:
+        #         print(line)
+
+
+        # pbar.update(duration)
+        # pbar.close()
+        print("\n[$] Video download successfully!")
     except KeyboardInterrupt:
         os.kill(p.pid, signal.CTRL_C_EVENT)
         sys.exit()
@@ -93,27 +122,30 @@ def ph_download_video(url, model_name, filename):
    
 def ph_download_playlist(url, model_name, limit):
     global download_dir
-    global duration
+    # global duration
     check_output_dir(model_name)
 
     # tmp_playlist download
     print('... Getting playlist information...')
-    playlist_download_command = [".\youtube-dl", "-j", "--flat-playlist", "--no-check-certificate", url]
+    playlist_download_command = [".\yt-dlp", "-j", "--flat-playlist", "--no-check-certificate", url]
     res = subprocess.run(playlist_download_command, capture_output=True, text=True).stdout.split("\n")
     if (limit != 0 ):
         print("[!] Limit: {} videos".format(limit))
     count = 0
+
     for i in range(len(res) - 1):
         if (count == limit and limit != 0):
             break
             sys.exit()
         try:
-            video_dict = ast.literal_eval(res[i])
+            # print(res[i])
+            # video_dict = ast.literal_eval(res[i])
+            video_dict = json.loads(res[i])
             url = video_dict['url']
-            p = subprocess.Popen(['.\youtube-dl', '--no-warnings', '--dump-json', '--skip-download', url], stdout=subprocess.PIPE, stderr=None, shell = True)
+            p = subprocess.Popen(['.\yt-dlp', '--no-warnings', '--dump-json', '--skip-download', url], stdout=subprocess.PIPE, stderr=None, shell = True)
             output = p.communicate()[0]
             info = json.loads(output.decode('utf-8'))
-            duration = int(info['duration'])
+            # duration = int(info['duration'])
             filename = os.path.join(download_dir, model_name, fix_title(str(info["title"])) + '.' + str(info['ext']))
             print("\n\n==========================================\n[+] File #{}: {}".format(count, fix_title(str(info["title"])) + '.' + str(info['ext'])))
             ph_download_video(url, model_name, filename)
@@ -126,7 +158,7 @@ def fix_url(url, type):
     url = ph_check_valid_pornhub_url(url)
 
     if '/model/' not in url:
-        p = subprocess.Popen(['.\youtube-dl', '--no-warnings', '--dump-json', '--skip-download', url], stdout=subprocess.PIPE, stderr=None, shell = True)
+        p = subprocess.Popen(['.\yt-dlp', '--no-warnings', '--dump-json', '--skip-download', url], stdout=subprocess.PIPE, stderr=None, shell = True)
         output = p.communicate()[0]
         info = json.loads(output.decode('utf-8'))
         model_name = info['uploader']
@@ -144,14 +176,14 @@ def fix_url(url, type):
     return (url, model_name)
 
 def ph_get_video(url):
-    global duration
+    # global duration
     url = ph_check_valid_pornhub_url(url)
     
-    p = subprocess.Popen(['.\youtube-dl', '--no-warnings', '--dump-json', '--skip-download', url], stdout=subprocess.PIPE, stderr=None, shell = True)
+    p = subprocess.Popen(['.\yt-dlp', '--no-warnings', '--dump-json', '--skip-download', url], stdout=subprocess.PIPE, stderr=None, shell = True)
     output = p.communicate()[0]
     info = json.loads(output.decode('utf-8'))
     model_name = info['uploader']
-    duration = int(info['duration'])
+    # duration = int(info['duration'])
     filename = os.path.join(download_dir, model_name, fix_title(str(info["title"])) + '.' + str(info['ext']))
     print("[+] Model: " + model_name)
     print("[+] Filename: " + fix_title(str(info["title"])) + '.' + str(info['ext']))
