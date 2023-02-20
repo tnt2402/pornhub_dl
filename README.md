@@ -50,10 +50,16 @@ Please make sure to update tests as appropriate.
 [MIT](https://choosealicense.com/licenses/mit/)
 
 ## Special thanks
-YouTube-DL (the world's most powerful tool) 
+```
+YouTube-DL (the world's most powerful tool)
+
 aria2c (a f*ckinn lightweight multi-source command-line download utility)
+
 PyFiglet (simple and beauty)
+
 @ValdikSS for his Deep Packet Inspection circumvention utility (github.com/ValdikSS/GoodbyeDPI)
+
 @mariosemes for his PornHub-downloader (github.com/mariosemes/PornHub-downloader-python)
+```
 
 # from tnt2402 with <3
