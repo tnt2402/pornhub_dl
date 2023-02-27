@@ -44,10 +44,11 @@ def run_command(command):
         state = 0
         current_frag = 0
         total_frag = 1
+        result_txt = ''
         while True:
             output = process.stdout.readline().decode("utf-8")
             if "[download] 100" in output:
-                result_txt = 'Result: ' + output.split("[download]")[-1].strip()
+                result_txt = 'Result: ' + output.split("[download]")[1].strip()
 
             if output == '' and process.poll() is not None:
                 break
@@ -63,7 +64,7 @@ def run_command(command):
         pbar.update(100 - state)
         pbar.close()
         rc = process.poll()
-        print(result_txt)
+        if result_txt != '': print(result_txt)
         return rc
     except Exception as e:
         print(e)
@@ -126,16 +127,26 @@ def ph_download_playlist(url, model_name, limit):
     # global duration
     check_output_dir(model_name)
 
-    # tmp_playlist download
-    print('... Getting playlist information...')
-    playlist_download_command = [".\yt-dlp", "-j",
-                                 "--flat-playlist", "--no-check-certificate", url]
-    res = subprocess.run(playlist_download_command,
-                         capture_output=True, text=True).stdout.split("\n")
     if (limit != 0):
         print("[!] Limit: {} videos".format(limit))
+
+    # tmp_playlist download
+    print('... Getting playlist information...')
+    try:
+        playlist_download_command = [".\yt-dlp", "-j",
+                                 "--flat-playlist", "--no-check-certificate", url]
+        res = subprocess.run(playlist_download_command,
+                         capture_output=True, text=True).stdout.split("\n")
+    except Exception as e:
+        print(e)
+        sys.exit(1)
     count = 0
 
+    if res == ['']:
+        print("Cannot download playlist information!")
+        sys.exit(1)
+    print("Playlist has {} videos".format(len(res)))
+    
     for i in range(len(res) - 1):
         if (count == limit and limit != 0):
             break
